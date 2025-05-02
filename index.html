@@ -1,224 +1,359 @@
-Code html : <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QRIS Payment</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-            background: #000;
-            color: white;
-            position: relative;
-            overflow-y: auto;
-            min-height: 100vh;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
-        canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
+    /* Variabel Tema */
+    :root {
+      --bg-color: #000;
+      --text-color: #fff;
+      --box-bg: rgba(0, 0, 0, 0.8);
+      --box-shadow: 0 0 20px cyan;
+      --btn-bg: black;
+      --btn-text: cyan;
+      --btn-border: cyan;
+      --copy-bg: rgba(0, 255, 255, 0.1);
+      --copy-border: cyan;
+      --popup-bg: rgba(0, 255, 255, 0.2);
+    }
+    /* Tema Light Mode */
+    body.light-mode {
+      --bg-color: #fff;
+      --text-color: #000;
+      --box-bg: rgba(255, 255, 255, 0.8);
+      --box-shadow: 0 0 20px blue;
+      --btn-bg: white;
+      --btn-text: blue;
+      --btn-border: blue;
+      --copy-bg: rgba(0, 0, 255, 0.1);
+      --copy-border: blue;
+      --popup-bg: rgba(0, 0, 255, 0.2);
+    }
 
-        .container {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-            max-width: 450px;
-            margin: 80px auto;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-        }
-
-        .welcome-text {
-            font-size: 22px;
-            font-weight: bold;
-            color: white;
-            text-align: center;
-            padding: 10px;
-        }
-
-        .qris-container {
-            margin: 20px 0;
-        }
-
-        .qris-img {
-            width: 220px;
-            border-radius: 5px;
-            border: 2px solid #fff;
-            padding: 5px;
-            background: #000;
-            transition: transform 0.3s ease;
-        }
-
-        .qris-img:hover {
-            transform: scale(1.1);
-        }
-
-        .payment-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 14px;
-            margin: 12px 0;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
-            width: 100%;
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-        }
-
-        .payment-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 10px rgba(255, 255, 255, 0.5);
-        }
-
-        /* Warna tombol */
-        .gopay { background: #00AEEF; }   /* Biru Gopay */
-        .ovo { background: #8A2BE2; }     /* Ungu OVO */
-        .dana { background: #0079C1; }    /* Biru Muda DANA */
-        .saweria { background: #FF6F00; } /* Orange Saweia */
-        .qris { background: #D32F2F; }    /* Merah QRIS */
-
-        .spacer {
-            height: 500px;
-        }
-    </style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .payment-box {
+      background: var(--box-bg);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: var(--box-shadow);
+      max-width: 400px;
+      margin: auto;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .qr {
+      margin: 20px 0;
+    }
+    .qr img {
+      width: 200px;
+      border-radius: 10px;
+      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+    .qr:hover img {
+      transform: scale(1.05);
+    }
+    .zoom-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .zoom-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .zoom-overlay img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 15px;
+      box-shadow: 0 0 25px rgba(0, 255, 204, 0.5);
+      animation: fadeInZoom 0.3s ease;
+    }
+    @keyframes fadeInZoom {
+      from {
+        transform: scale(0.7);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    .thumbnail {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-bottom: 10px;
+      box-shadow: 0 0 15px cyan;
+    }
+    .neon-btn {
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      border: 2px solid var(--btn-border);
+      padding: 10px 15px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--btn-border);
+      transition: 0.3s;
+      margin-bottom: 20px;
+    }
+    .neon-btn:hover {
+      background: var(--btn-text);
+      color: var(--btn-bg);
+      box-shadow: 0 0 20px var(--btn-border);
+    }
+    .neon-btn:active {
+      transform: scale(0.9);
+    }
+    .copy-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      border: 1px solid var(--copy-border);
+      border-radius: 5px;
+      background: var(--copy-bg);
+      color: var(--btn-text);
+      margin-bottom: 15px;
+      width: 90%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  #copyPopup {
+    display: none;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    text-align: center;
+  }
+    /* Style untuk membuat logo pembayaran bulat */
+    .payment-logo {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-right: 10px;
+      box-shadow: 0 0 10px var(--btn-border);
+    }
+    .copy-box span {
+      flex-grow: 1;
+      text-align: left;
+    }
+    .copy-box button {
+      background: var(--btn-text);
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      color: var(--btn-bg);
+      transition: 0.2s;
+      margin-left: 10px;
+    }
+    .copy-box button:active {
+      transform: scale(0.9);
+    }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      align-items: center;
+      justify-content: center;
+    }
+    .popup-content {
+      background: var(--btn-text);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px var(--btn-border);
+      text-align: center;
+    }
+    .qr-image {
+      max-width: 75%;
+      height: auto;
+      display: block;
+      margin: auto;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 14px;
+      color: var(--btn-text);
+    }
+    /* Popup Copy Berhasil dengan Tema Neon */
+    #copyPopup {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--popup-bg);
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--btn-text);
+      text-align: center;
+      box-shadow: 0 0 15px var(--btn-border);
+      animation: fadeInOut 1.5s ease-in-out;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    }
+    /* Tombol mode toggle (bulat dan di pojok kanan atas) */
+    #modeToggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      background-color: var(--btn-text);
+      color: var(--btn-bg);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--btn-border);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    #modeToggle:hover {
+      opacity: 0.8;
+    }
+     .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 25px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid #00ffcc;
+      color: #00ffcc;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .close-btn:hover {
+      background: rgba(0, 255, 204, 0.2);
+    }
+  </style>
 </head>
 <body>
+  <!-- Tombol Mode Toggle -->
+  <button id="modeToggle" onclick="toggleMode()">☀︎</button>
 
-<canvas id="supernova"></canvas>
-
-<div class="container">
-    <div class="welcome-text">
-        ✨ <b>SELAMAT DATANG DI WEBSITE PAYMENT NDIKAFATH ID</b> ✨<br><br>
-        🙏 Kepada pelanggan yang terhormat, kini Anda bisa melakukan transaksi dengan <b>mudah, cepat, dan aman</b> di web kami! ⚡💳<br><br>
-        💰 <b>Bayar lebih praktis</b> dengan berbagai metode pembayaran seperti <b>GoPay, OVO, DANA,SAWERIA, dan QRIS Allpay</b>! 📲✅<br><br>
-        🚀 <b>Nikmati kemudahan transaksi tanpa ribet!</b> Terima kasih telah mempercayakan pembayaran Anda kepada kami. 😊🙌
+  <div class="payment-box">
+    <img src="https://files.catbox.moe/ceu3zg.jpg" alt="Thumbnail" class="thumbnail" />
+    <h2>Metode Pembayaran</h2>
+    <div class="qr">
+      <img id="qris-img" src="https://files.catbox.moe/45p7in.net" alt="QR Code" />
     </div>
-
-    <h2>Scan QRIS untuk Membayar</h2>
-
-    <div class="qris-container">
-        <a href="https://img12.pixhost.to/images/665/572631127_skyzopedia.jpg" target="_blank">
-            <img class="qris-img" src="https://img12.pixhost.to/images/665/572631127_skyzopedia.jpg" alt="QRIS Allpay">
-        </a>
+<div class="zoom-overlay" id="zoomOverlay">
+    <button class="close-btn" id="closeZoom">Tutup</button>
+    <img src="https://files.catbox.moe/45p7in.net" alt="Zoomed QR" />
+  </div>
+    <div class="copy-box">
+      <img src="https://files.catbox.moe/x1tw8u.jpeg" alt="Dana" class="payment-logo" />
+      <span>Dana</span>
+      <button onclick="copyToClipboard('0895406686937')">Copy</button>
     </div>
+    <div class="copy-box">
+      <img src="https://files.catbox.moe/3gig7z.jpg" alt="Gopay" class="payment-logo" />
+      <span>Gopay</span>
+      <button onclick="copyToClipboard('0895406686937')">Copy</button>
+    </div>
+    <div class="copy-box">
+      <img src="https://files.catbox.moe/pl1bhu.jpeg" alt="Ovo" class="payment-logo" />
+      <span>Ovo</span>
+      <button onclick="copyToClipboard('0895406686937')">Copy</button>
+    </div>
+    <br />
+    <a href="https://saweria.co/ndikafathid" target="_blank" style="color: var(--btn-text); text-decoration: none; font-weight: bold;">Bayar via Saweria</a>
+  </div>
 
-    <!-- Tombol pembayaran -->
-    <button class="payment-btn gopay" onclick="copyToClipboard('0895406686937')">
-        Bayar via GoPay
-    </button>
-    <button class="payment-btn ovo" onclick="copyToClipboard('0895406686937')">
-        Bayar via OVO
-    </button>
-    <button class="payment-btn saweria" onclick="copyToClipboard ('https://saweria.co/ndikafathid')">
-      Bayar Via Saweria
-    </button>
-    <button class="payment-btn dana" onclick="copyToClipboard('0895406686937')">
-        Bayar via DANA
-    </button>
-    <button class="payment-btn qris" onclick="window.open('https://img12.pixhost.to/images/665/572631127_skyzopedia.jpg', '_blank')">
-        Bayar via QRIS
-    </button>
-
-    <!-- Tombol masuk aplikasi -->
-    <h2>Masuk ke Aplikasi</h2>
-    <button class="payment-btn gopay" onclick="openApp('gopay')">Buka GoPay</button>
-    <button class="payment-btn ovo" onclick="openApp('ovo')">Buka OVO</button>
-    <button class="payment-btn dana" onclick="openApp('dana')">Buka DANA</button>
-
+  <div id="copyPopup">Berhasil di salin Ya Tod!</div>
+  <div class="footer">
+    <a href="https://wa.me/6281338240193" target="_blank" style="color: var(--btn-text); text-decoration: none; font-weight: bold;">
+        © NdikaFath ID - Since 2025
+    </a>
 </div>
 
-<div class="spacer"></div>
-
-<script>
-    const canvas = document.getElementById("supernova");
-    const ctx = canvas.getContext("2d");
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    let particles = [];
-
-    function createParticle() {
-        return {
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: Math.random() * 3 + 1,
-            speedX: (Math.random() - 0.5) * 2,
-            speedY: (Math.random() - 0.5) * 2,
-            life: Math.random() * 60 + 40,
-            color: `hsl(${Math.random() * 360}, 100%, 70%)`,
-        };
+  <script>
+    function showQR() {
+      let qrPopup = document.getElementById("qrPopup");
+      qrPopup.style.display = "flex";
     }
 
-    function initParticles() {
-        for (let i = 0; i < 100; i++) {
-            particles.push(createParticle());
-        }
-    }
-
-    function drawParticle(p) {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.fill();
-    }
-
-    function updateParticles() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        particles.forEach((p, index) => {
-            p.x += p.speedX;
-            p.y += p.speedY;
-            p.size *= 0.98;
-            p.life--;
-
-            if (p.life <= 0 || p.size <= 0.5) {
-                particles.splice(index, 1);
-                particles.push(createParticle());
-            }
-
-            drawParticle(p);
-        });
-
-        requestAnimationFrame(updateParticles);
-    }
-
-    initParticles();
-    updateParticles();
+    document.getElementById("qrPopup").addEventListener("click", function (event) {
+  if (event.target === this || event.target.classList.contains("qr-image")) {
+    this.style.display = "none";
+  }
+});
 
     function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert("Nomor berhasil disalin: " + text);
-        });
+      navigator.clipboard.writeText(text);
+      let popup = document.getElementById("copyPopup");
+      popup.style.display = "block";
+      setTimeout(() => {
+        popup.style.display = "none";
+      }, 1500);
     }
 
-    function openApp(app) {
-        const urls = {
-            gopay: "https://gojek.onelink.me/1177597938?pid=mobile&c=gojekapp",
-            ovo: "https://ovo.id",
-            dana: "https://link.dana.id/QRIS"
-        };
-        window.open(urls[app], "_blank");
+    function toggleMode() {
+      document.body.classList.toggle("light-mode");
+      // Ubah ikon tombol mode berdasarkan mode aktif
+      const modeToggle = document.getElementById("modeToggle");
+      if (document.body.classList.contains("light-mode")) {
+        modeToggle.textContent = "☾"; // ikon bulan untuk light mode
+      } else {
+        modeToggle.textContent = "☀︎"; // ikon matahari untuk dark mode
+      }
     }
+    const qrImg = document.getElementById('qris-img');
+    const zoomOverlay = document.getElementById('zoomOverlay');
+    const closeBtn = document.getElementById('closeZoom');
 
-    window.addEventListener("resize", () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    qrImg.addEventListener('click', () => {
+      zoomOverlay.classList.add('active');
     });
-</script>
 
+    closeBtn.addEventListener('click', () => {
+      zoomOverlay.classList.remove('active');
+    });
+
+    zoomOverlay.addEventListener('click', (e) => {
+      if (e.target === zoomOverlay) {
+        zoomOverlay.classList.remove('active');
+      }
+    });
+  </script>
 </body>
-      </html>
+</html>
